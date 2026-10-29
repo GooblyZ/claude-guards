@@ -23,9 +23,19 @@ const setEnabled = async ($: EngineInterface, isEnabled: boolean) => {
   await setOpen($, isEnabled)
 }
 
+/** The block's colours: softer than the theme's own, one per meaning. */
+const PALETTE: Record<string, string> = {
+  success: '#5DCAA5',
+  warning: '#EF9F27',
+  error: '#E24B4A',
+  claude: '#E07A55',
+  suggestion: '#85B7EB',
+}
+const paint = (tone?: string) => (tone ? PALETTE[tone] ?? tone : undefined)
+
 /** A switch like the app's own: a blue track with the knob right when on, grey with it left when off. */
 const switchSvg = (isOn: boolean) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="16" viewBox="0 0 30 16"><rect width="30" height="16" rx="8" fill="${isOn ? '#378ADD' : '#5f5e5a'}"/><circle cx="${isOn ? 22 : 8}" cy="8" r="6" fill="#ffffff"/></svg>`
+  `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="15" viewBox="0 0 28 15"><rect width="28" height="15" rx="7.5" fill="${isOn ? '#378ADD' : '#5f5e5a'}"/><circle cx="${isOn ? 20.5 : 7.5}" cy="7.5" r="5.5" fill="#ffffff"/></svg>`
 
 export const register: Register = on => {
   registerUsage(on)
@@ -90,8 +100,9 @@ export const register: Register = on => {
         if (e.surface === 'desktop') {
           const { Svg } = $.ui.resolve(e)
           return (
-            <Box position="relative" width={4} flexShrink={0} overflow="hidden">
-              <Svg source={switchSvg(isOn)} alt={`${label} ${isOn ? 'on' : 'off'}`} width={30} height={16} />
+            // One text line tall, the switch centred in it, so it sits level with the words beside it.
+            <Box position="relative" width={4} height={1} flexShrink={0} alignItems="center" overflow="hidden">
+              <Svg source={switchSvg(isOn)} alt={`${label} ${isOn ? 'on' : 'off'}`} width={28} height={15} />
               <Box position="absolute" top={0} left={0}>
                 <Button key={key} plain label="⠀⠀⠀" onPress={flip} />
               </Box>
@@ -118,7 +129,7 @@ export const register: Register = on => {
           )
         }
         const cells = Math.round(Math.min(1, b.cap > 0 ? b.used / b.cap : 1) * 6)
-        return <Text color={b.tone}>{'▰'.repeat(cells) + '▱'.repeat(6 - cells)}</Text>
+        return <Text color={paint(b.tone)}>{'▰'.repeat(cells) + '▱'.repeat(6 - cells)}</Text>
       }
 
       // Three dots that pulse in turn while a check runs: animated SVG on desktop, an ellipsis elsewhere.
@@ -161,16 +172,28 @@ export const register: Register = on => {
       }
 
       const rows = [await usageRow($), await modelRow($)]
-      const summary = rows.filter(r => r.isOn && r.brief).map(r => r.brief)
+      // Folded: each guard's headline in its colour, the usage bar beside it, on one line.
+      const shown = rows.filter(r => r.isOn && r.text)
+      const folded = (
+        <Box alignItems="center" gap={1} flexShrink={1} minWidth={0}>
+          {shown.map((r, i) => (
+            <Box key={`guards-${r.name.toLowerCase()}-brief`} alignItems="center" gap={1}>
+              {i > 0 && <Text dimColor>·</Text>}
+              <Text color={paint(r.tone)} weight="semibold">
+                {r.text}
+              </Text>
+              {r.bar && bar(r.name, r.bar)}
+            </Box>
+          ))}
+        </Box>
+      )
 
       // The top line: the arrow, what the folded block says, and the main switch at the right.
       const header = (
         <Box alignItems="center" gap={1}>
           {fold}
           <Box flexGrow={1} flexShrink={1} minWidth={0}>
-            <Text dimColor wrap="truncate-end">
-              {isOpen ? '' : summary.join('   ·   ')}
-            </Text>
+            {!isOpen && folded}
           </Box>
           <Text dimColor>Guards</Text>
           {toggle('guards-main-switch', 'Guards', isEnabled, () => setEnabled($, !isEnabled))}
@@ -200,7 +223,7 @@ export const register: Register = on => {
               <Box flexDirection="column" flexShrink={1} minWidth={0}>
                 <Box alignItems="center" gap={1}>
                   {r.text && (
-                    <Text color={r.tone} weight="semibold">
+                    <Text color={paint(r.tone)} weight="semibold">
                       {r.text}
                     </Text>
                   )}
