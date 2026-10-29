@@ -136,7 +136,7 @@ export async function usageRow($: EngineInterface): Promise<GuardRow> {
     ...row,
     text,
     tone: v.tone,
-    note: [v.word, m.five && m.five.pct >= 70 ? `5h ${pct(m.five.pct)}` : ''].filter(Boolean).join(' · '),
+    note: [v.word, `week ${pct(m.week.pct)}`, m.five && m.five.pct >= 70 ? `5h ${pct(m.five.pct)}` : ''].filter(Boolean).join(' · '),
     extra: [v.tone === 'error' ? v.extra : '', situation].filter(Boolean).join(' '),
     brief: text,
     bar: { used: m.todayUsed, cap: p.todayBudget, usual: p.todayUsual, tone: v.tone },

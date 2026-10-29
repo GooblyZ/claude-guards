@@ -79,12 +79,17 @@ test('a follow-up in a long conversation stays on the running model; a new topic
   expect(pickFor(dog, { ...onOpus, context: 120_000, topic: 'new' }).notes.join(' ')).toMatch(/\/clear/)
 })
 
-test('a week heading over the limit gives up effort first, never below Sonnet for Opus work', async () => {
-  const tight = budget(weekAt(80), NOW)
+test('the budget steps down for a full 5-hour window or a day past its allowance, never for a weekly forecast', async () => {
+  // A week heading to 92% at its pace so far is no reason: days off would prove it wrong.
+  expect(budget(weekAt(80), NOW).steps).toBe(0)
+  const five = [{ kind: 'five_hour', percentUsed: 90, resetsAt: new Date(NOW + H).toISOString() }]
+  expect(budget(five, NOW)).toMatchObject({ steps: 1, why: '5-hour window 90%' })
+  expect(budget(CALM, NOW, { isOver: true, isShort: false }).steps).toBe(1)
+  const tight = budget(five, NOW, { isOver: true, isShort: false })
   expect(tight.steps).toBe(2)
   const hard = decide(needOf(f({ kind: 'bugfix', ambiguity: 'high', deepReasoning: true })), 'x', 'haiku', { budget: tight, costs: {} })
   expect(hard).toMatchObject({ model: 'opus', effort: 'low' })
-  expect(hard.notes.join(' ')).toMatch(/save your limits: week 80%/)
+  expect(hard.notes.join(' ')).toMatch(/save your limits: 5-hour window 90%, past today’s allowance/)
 })
 
 test('measured per-prompt costs never reorder the options; savings come from the research', async () => {

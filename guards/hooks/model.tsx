@@ -29,6 +29,8 @@ export const draftAtom = atom({ plugin: 'guards', key: 'draft' } as const, null,
 export const lastAtom = atom({ plugin: 'guards', key: 'last' } as const, null, { shape: 'rec-4' })
 export const actualAtom = atom({ plugin: 'guards', key: 'actual' } as const, null, { shape: 'actual-1' })
 const enabledAtom = atom({ plugin: 'guards', key: 'isEnabled' } as const, true)
+// The usage side's meter, read here for today's state: the same value, declared again in this file.
+const meterAtom = atom({ plugin: 'guards', key: 'meter' } as const, null, { shape: 'meter-3' })
 export const modelOnAtom = atom({ plugin: 'guards', key: 'modelOn' } as const, true)
 export const smartAtom = atom({ plugin: 'guards', key: 'isSmart' } as const, true)
 export const checkingAtom = atom({ plugin: 'guards', key: 'isChecking' } as const, false)
@@ -68,6 +70,12 @@ export async function getCosts($: EngineInterface) {
 }
 const weekOf = (list: Reading[]) => list.find(r => r.kind === 'seven_day')?.percentUsed
 
+async function todayState($: EngineInterface) {
+  const m = await read($, meterAtom)
+  if (!m?.pace) return undefined
+  return { isOver: m.todayUsed > m.pace.todayBudget, isShort: m.pace.restDaily !== undefined && m.pace.restDaily < 100 / 7 / 2 }
+}
+
 async function getOutcomes($: EngineInterface) {
   return ((await $.store.get('outcomes')) ?? {}) as Record<string, Outcome>
 }
@@ -75,7 +83,7 @@ async function getOutcomes($: EngineInterface) {
 // What the decision weighs besides the need: budget, your costs and outcomes, the running model, the context.
 async function contextFor($: EngineInterface, kind: string, topic?: Features['topic']) {
   return {
-    budget: budget(mem.readings, await $.clock.now()),
+    budget: budget(mem.readings, await $.clock.now(), await todayState($)),
     costs: await getCosts($),
     actual: (await read($, actualAtom)) ?? undefined,
     context: mem.context,

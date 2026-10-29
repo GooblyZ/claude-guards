@@ -213,6 +213,7 @@ export const register: Register = on => {
       return (
         <Box flexDirection="column" rowGap="xs">
           {header}
+          <Box height={0} marginBottom="xs" />
           {rows.map(r => (
             <Box key={`guards-${r.name.toLowerCase()}-row`} alignItems="flex-start" gap={1}>
               {toggle(`guards-${r.name.toLowerCase()}-switch`, r.name, r.isOn, r.flip)}

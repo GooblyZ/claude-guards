@@ -47,9 +47,10 @@ running: `Opus · medium ✓ fits`, `Try Sonnet · medium`, or `Consider Opus ·
   stays on the running model at low effort: a switch re-reads the whole context
   without the cache, and the new model starts without what the running one
   worked out. A new topic is told to /clear first.
-- **Your budget counts.** When the week heads past 85% at its pace so far (or
-  the 5-hour window passes 85%), the advice gives up effort first, then a tier,
-  never below Sonnet for work that needs Opus.
+- **Your budget counts, but only what is certain.** A 5-hour window past 85%,
+  or today past its allowance, steps the advice down; so does a week that is
+  already running short. A forecast of the week does not: days you don't use
+  Claude would make it wrong.
 
 Each Haiku check costs about 1.5k Haiku tokens; drafts under 20 characters,
 follow-ups and drafts already checked skip it. `/model-guard local` keeps the

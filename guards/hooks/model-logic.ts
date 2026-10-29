@@ -233,28 +233,32 @@ export const needOf = (f: Features): Need => {
 export type Reading = { kind: string; percentUsed: number; resetsAt?: string }
 export type Budget = { steps: number; why: string }
 
+/** Where today stands, from the usage side: past its allowance, and whether the week is running short. */
+export type Today = { isOver: boolean; isShort: boolean }
+
 /**
- * How many steps your limits take the advice down. The weekly limit leads:
- * where the week ends at the pace so far (a step from 85%, two past 110%),
- * then a nearly full 5-hour window.
+ * How many steps your limits take the advice down. Only what is certain counts:
+ * a 5-hour window nearly full (a step from 85%, two from 95%), today past its
+ * allowance (a step), or a week already running short (a step). A forecast of
+ * the week does not: days you don't use Claude would make it wrong.
  */
-export const budget = (list: Reading[], now: number): Budget => {
+export const budget = (list: Reading[], _now: number, today?: Today): Budget => {
   let steps = 0
-  let why = ''
-  const week = list.find(r => r.kind === 'seven_day')
-  if (week?.resetsAt) {
-    const done = clamp(1 - (Date.parse(week.resetsAt) - now) / (7 * DAY))
-    const projected = done > 0.1 ? week.percentUsed / done : undefined
-    if (week.percentUsed >= 90 || (projected !== undefined && projected > 110)) steps = 2
-    else if (week.percentUsed >= 75 || (projected !== undefined && projected > 85)) steps = 1
-    if (steps) why = projected !== undefined ? `week ${round(week.percentUsed)}%, heading to ${round(projected)}%` : `week ${round(week.percentUsed)}%`
-  }
+  const why: string[] = []
   const five = list.find(r => r.kind === 'five_hour')
-  if (five && five.percentUsed >= 85 && steps < 2) {
-    steps = Math.max(steps, five.percentUsed >= 95 ? 2 : 1)
-    why = why || `5-hour window ${round(five.percentUsed)}%`
+  if (five && five.percentUsed >= 85) {
+    steps = five.percentUsed >= 95 ? 2 : 1
+    why.push(`5-hour window ${round(five.percentUsed)}%`)
   }
-  return { steps, why }
+  if (today?.isOver && steps < 2) {
+    steps += 1
+    why.push('past today’s allowance')
+  }
+  if (today?.isShort && steps < 2) {
+    steps += 1
+    why.push('the week is running short')
+  }
+  return { steps: Math.min(2, steps), why: why.join(', ') }
 }
 
 // ---------- the decision ----------
