@@ -1,0 +1,4 @@
+.claude-plugin/types/
+guards/.claude-plugin/types/
+guards/tsconfig.json
+node_modules/

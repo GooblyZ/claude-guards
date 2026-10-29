@@ -1,0 +1,14 @@
+{
+  "name": "claude-guards",
+  "owner": {
+    "name": "GooblyZ"
+  },
+  "description": "A foldable block above the Claude Code prompt: usage-guard flags a heavy day against your weekly limit, model-guard suggests a model and effort before you send",
+  "plugins": [
+    {
+      "name": "guards",
+      "source": "./guards",
+      "description": "Usage guard and model guard in one foldable block above the prompt, each with its own on/off switch"
+    }
+  ]
+}

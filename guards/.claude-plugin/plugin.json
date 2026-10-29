@@ -1,0 +1,6 @@
+{
+  "name": "guards",
+  "version": "0.2.0",
+  "description": "A foldable block above the prompt: usage-guard flags a heavy day against your weekly limit, model-guard suggests a model and effort before you send",
+  "types": "./types/index.d.ts"
+}
