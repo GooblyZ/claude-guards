@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { advise, budget, decide, missOf, outcomeKey, withPrevious, needOf, parseFeatures, type Features } from '../hooks/model-logic'
-import { SHARE, addToDay, foldSession, newSession, pace, todayVerdict, verdict, weekDelta, seedToday } from '../hooks/usage-logic'
+import { SHARE, addToDay, healDays, foldSession, newSession, pace, todayVerdict, verdict, weekDelta, seedToday } from '../hooks/usage-logic'
 
 const NOW = Date.parse('2026-10-28T12:00:00')
 const H = 3_600_000
@@ -37,6 +37,8 @@ const pickFor = (over: Partial<Features>, extra: Partial<Parameters<typeof decid
 test('the day ledger and the session add up across readings and a reset', async () => {
   expect(weekDelta({ pct: 10, resetsAt: NOW + 48 * H }, { pct: 14, resetsAt: NOW + 48 * H })).toBe(4)
   expect(weekDelta({ pct: 14, resetsAt: NOW + 48 * H }, { pct: 2, resetsAt: NOW + 216 * H })).toBe(2)
+  // A lower figure in the same week is another chat's older reading: nothing added, no false reset.
+  expect(weekDelta({ pct: 25, resetsAt: NOW + 48 * H }, { pct: 23, resetsAt: NOW + 48 * H })).toBe(0)
   expect(addToDay(addToDay({}, NOW, 4), NOW, 2)['2026-10-28']?.used).toBe(6)
 
   let s = foldSession(newSession(NOW), READINGS)
@@ -196,4 +198,12 @@ test('on the running model, a known effort is compared; an unknown one is only n
   expect(off.text).toBe('Set effort to low')
   expect(off.extra).toMatch(/you're on high/)
   expect(advise(rec, { model: 'claude-opus-5-5' }).text).toBe('Opus · low')
+})
+
+test('the days of a week never add up to more than the week; today gives back the excess', async () => {
+  const week = { pct: 29, resetsAt: NOW + 4 * 24 * H + 10 * H }
+  const days = { '2026-10-24': { used: 9 }, '2026-10-27': { used: 12.8 }, '2026-10-28': { used: 32 } }
+  // The 24th is before this week began; the 27th and today count: 12.8 + 32 = 44.8 against 29.
+  expect(healDays(days, week, NOW)['2026-10-28']?.used).toBe(16.2)
+  expect(healDays({ '2026-10-28': { used: 5 } }, week, NOW)['2026-10-28']?.used).toBe(5)
 })

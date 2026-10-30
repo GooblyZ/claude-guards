@@ -63,14 +63,14 @@ export const register: Register = on => {
     const arg = e.args.trim().toLowerCase()
     if (arg === 'hide' || arg === 'show') {
       await update($, hiddenAtom, () => arg === 'hide')
-      return { text: arg === 'hide' ? 'guards: hidden in this chat. /guards show brings it back.' : 'guards: shown' }
+      return { text: arg === 'hide' ? 'Hidden in this chat. /guards show brings it back.' : 'Shown' }
     }
     if (arg !== 'on' && arg !== 'off') {
-      return { text: `guards: ${(await read($, enabledAtom)) ? 'on' : 'off'}. /guards on|off for every chat, /guards hide|show for this chat alone.` }
+      return { text: `${(await read($, enabledAtom)) ? 'On' : 'Off'}. /guards on|off for every chat, /guards hide|show for this chat alone.` }
     }
     const isEnabled = arg === 'on'
     await setEnabled($, isEnabled)
-    return { text: isEnabled ? 'guards: on' : 'guards: off in every chat. /guards on brings it back.' }
+    return { text: isEnabled ? 'On' : 'Off in every chat. /guards on brings it back.' }
   })
 
   on('session.measure', async ($, e, next) => {

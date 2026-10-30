@@ -19,6 +19,8 @@ import {
   tone,
   verdict,
   weekDelta,
+  healDays,
+  isNewWeek,
   type Reading,
 } from './usage-logic'
 
@@ -61,12 +63,13 @@ function measure($: EngineInterface, fresh?: Reading[]) {
           await $.store.set('days', days)
           await $.store.set('seeded', true)
         }
-        const delta = weekDelta((await $.store.get('lastWeek')) as Window | undefined, w)
-        if (delta > 0) {
-          days = addToDay(days, now, delta)
-          await $.store.set('days', days)
-        }
-        await $.store.set('lastWeek', w)
+        const last = (await $.store.get('lastWeek')) as Window | undefined
+        const delta = weekDelta(last, w)
+        if (delta > 0) days = addToDay(days, now, delta)
+        days = healDays(days, w, now)
+        await $.store.set('days', days)
+        // Keep the newest figure: an older one from another chat never replaces it.
+        if (!last || isNewWeek(last, w) || w.pct >= last.pct) await $.store.set('lastWeek', w)
       }
     }
     // Before this session's first reply there are no readings yet: the last one stored stands in,

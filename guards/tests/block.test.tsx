@@ -144,8 +144,8 @@ test('the main switch stops everything and leaves one "Guards off" line; its swi
     expect(await has(ui, /^Model$/)).toBe(true)
     await ui.unmount()
   }
-  expect((await $.command.run({ command: 'guards', args: 'off' })).text).toBe('guards: off in every chat. /guards on brings it back.')
-  expect((await $.command.run({ command: 'guards', args: 'on' })).text).toBe('guards: on')
+  expect((await $.command.run({ command: 'guards', args: 'off' })).text).toBe('Off in every chat. /guards on brings it back.')
+  expect((await $.command.run({ command: 'guards', args: 'on' })).text).toBe('On')
 })
 
 test('the ✕ hides the block in this chat alone, and /guards show brings it back', async ($, on) => {
@@ -155,7 +155,7 @@ test('the ✕ hides the block in this chat alone, and /guards show brings it bac
   await ui.press({ key: 'guards-hide' })
   expect(await has(ui, /Usage|Model|Guards|▸|▾/)).toBe(false)
   expect(await has(ui, /beneath/)).toBe(true)
-  expect((await $.command.run({ command: 'guards', args: 'show' })).text).toBe('guards: shown')
+  expect((await $.command.run({ command: 'guards', args: 'show' })).text).toBe('Shown')
   expect(await has(ui, /^Usage$/)).toBe(true)
   await ui.unmount()
 })

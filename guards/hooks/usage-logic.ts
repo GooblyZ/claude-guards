@@ -33,11 +33,31 @@ export const windowOf = (list: Reading[], kind: string): Window | undefined => {
   return { pct: r.percentUsed, resetsAt: r.resetsAt ? Date.parse(r.resetsAt) : undefined }
 }
 
-/** What the weekly % grew by since the last reading; a reset counts the new value. */
+/** A new week: the reset moved on. A lower figure within the same week is only an older reading. */
+export const isNewWeek = (last: Window | undefined, week: Window) => (week.resetsAt ?? 0) > (last?.resetsAt ?? 0) + HOUR
+
+/**
+ * What the weekly % grew by since the last reading; a new week counts its new value. A lower
+ * figure in the same week comes from a chat that hasn't had a reply for a while: it adds nothing.
+ */
 export const weekDelta = (last: Window | undefined, week: Window) => {
   if (!last) return 0
-  const isReset = (week.resetsAt ?? 0) > (last.resetsAt ?? 0) + HOUR || week.pct < last.pct
-  return Math.max(0, isReset ? week.pct : week.pct - last.pct)
+  if (isNewWeek(last, week)) return week.pct
+  return Math.max(0, week.pct - last.pct)
+}
+
+/**
+ * The days of this week can't add up to more than the week itself. When they do (an old bug, a
+ * reading counted twice), today gives back the excess.
+ */
+export const healDays = (days: Record<string, Day>, week: Window, now: number) => {
+  if (week.resetsAt === undefined) return days
+  const first = dateKey(week.resetsAt - WEEK)
+  const sum = Object.entries(days).filter(([k]) => k >= first).reduce((a, [, d]) => a + d.used, 0)
+  const excess = sum - week.pct
+  const key = dateKey(now)
+  if (excess <= 0.2 || !days[key]) return days
+  return { ...days, [key]: { used: round1(Math.max(0, days[key]!.used - excess)) } }
 }
 
 /** Count one weekly delta to today, keeping three weeks of days. */
