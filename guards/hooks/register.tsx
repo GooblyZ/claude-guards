@@ -173,15 +173,23 @@ export const register: Register = on => {
 
       const rows = [await usageRow($), await modelRow($)]
       // Folded: each guard's headline in its colour, the usage bar beside it, on one line.
-      const shown = rows.filter(r => r.isOn && r.text)
+      // A check under way or a pause while Claude works shows here too, in a word.
+      const shown = rows.filter(r => r.isOn && (r.text || r.isBusy || r.note.startsWith('⏸')))
       const folded = (
         <Box alignItems="center" gap={1} flexShrink={1} minWidth={0}>
           {shown.map((r, i) => (
             <Box key={`guards-${r.name.toLowerCase()}-brief`} alignItems="center" gap={1}>
               {i > 0 && <Text dimColor>·</Text>}
-              <Text color={paint(r.tone)} weight="semibold">
-                {r.text}
-              </Text>
+              {r.isBusy && busy()}
+              {r.isBusy ? (
+                <Text dimColor>checking</Text>
+              ) : r.text ? (
+                <Text color={paint(r.tone)} weight="semibold">
+                  {r.text}
+                </Text>
+              ) : (
+                <Text dimColor>⏸ paused</Text>
+              )}
               {r.bar && bar(r.name, r.bar)}
             </Box>
           ))}
