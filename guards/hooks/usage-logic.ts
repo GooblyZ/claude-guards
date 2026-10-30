@@ -147,6 +147,8 @@ export const todayVerdict = (m: Meter): Verdict => {
   if (m.todayUsed > p.todayBudget) {
     return { word: 'past today’s share', tone: 'warning', extra: 'That’s fine: the days ahead get a little less.' }
   }
+  // Clearly past where an even day stands by this hour (the bar's tick), though not yet past the share.
+  if (m.todayUsed >= 1 && m.todayUsed > p.todayUsual * 1.2 + 0.5) return { word: 'ahead of today’s pace', tone: 'warning' }
   return { word: 'on track', tone: 'success' }
 }
 

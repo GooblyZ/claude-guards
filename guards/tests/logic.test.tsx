@@ -207,3 +207,12 @@ test('the days of a week never add up to more than the week; today gives back th
   expect(healDays(days, week, NOW)['2026-10-28']?.used).toBe(16.2)
   expect(healDays({ '2026-10-28': { used: 5 } }, week, NOW)['2026-10-28']?.used).toBe(5)
 })
+
+test('ahead of the tick but under the share reads as ahead of pace, not on track', async () => {
+  // Wednesday noon: an even week is at 42.9%; 20% before today, so the tick sits at 22.9% of a 30% day.
+  const week = { pct: 48, resetsAt: NOW + 4 * D }
+  const ahead = pace(week, 28, NOW)!
+  expect(todayVerdict({ week, todayUsed: 28, pace: ahead })).toMatchObject({ word: 'ahead of today’s pace', tone: 'warning' })
+  const calm = { pct: 40, resetsAt: NOW + 4 * D }
+  expect(todayVerdict({ week: calm, todayUsed: 20, pace: pace(calm, 20, NOW) }).word).toBe('on track')
+})
