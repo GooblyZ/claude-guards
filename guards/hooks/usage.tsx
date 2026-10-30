@@ -134,7 +134,7 @@ export async function usageRow($: EngineInterface): Promise<GuardRow> {
   const over = m.todayUsed - p.todayBudget
   const situation =
     over > 0.05
-      ? `Today is ${pct(over)} of the weekly limit past its share: the days ahead have that much less.`
+      ? `Today is ${pct(over)} of the weekly limit over its quota: the coming days have that much less.`
       : p.carry >= 0.5
         ? `+${pct(p.carry)} saved from earlier days: today has ${pct(p.todayBudget)} of the weekly limit instead of ${even}.`
         : p.carry <= -0.5
@@ -148,7 +148,8 @@ export async function usageRow($: EngineInterface): Promise<GuardRow> {
     note: `${[v.word, m.five && m.five.pct >= 70 ? `5h ${pct(m.five.pct)}` : ''].filter(Boolean).join(' · ')} (week ${pct(m.week.pct)})`,
     extra: [v.tone === 'error' ? v.extra : '', situation].filter(Boolean).join(' '),
     brief: text,
-    bar: { used: m.todayUsed, cap: p.todayBudget, usual: p.todayUsual, tone: v.tone },
+    // Today's quota alone, empty to full: no second mark to read against.
+    bar: { used: m.todayUsed, cap: p.todayBudget, tone: v.tone },
   }
 }
 

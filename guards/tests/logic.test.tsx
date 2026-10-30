@@ -173,7 +173,7 @@ test('today carries what earlier days left or overdrew, and red means the days a
   expect(Math.round(h.todayBudget * 10) / 10).toBe(13)
   const over = todayVerdict({ week: heavy, todayUsed: 15, pace: h })
   expect(over.tone).toBe('warning')
-  expect(over.extra).toMatch(/fine/)
+  expect(over.extra).toMatch(/coming days/)
 
   // 85% used with 4 days left: under half an even day each. That's the red flag.
   const short = { pct: 85, resetsAt: NOW + 4 * D }
@@ -208,11 +208,13 @@ test('the days of a week never add up to more than the week; today gives back th
   expect(healDays({ '2026-10-28': { used: 5 } }, week, NOW)['2026-10-28']?.used).toBe(5)
 })
 
-test('ahead of the tick but under the share reads as ahead of pace, not on track', async () => {
-  // Wednesday noon: an even week is at 42.9%; 20% before today, so the tick sits at 22.9% of a 30% day.
-  const week = { pct: 48, resetsAt: NOW + 4 * D }
-  const ahead = pace(week, 28, NOW)!
-  expect(todayVerdict({ week, todayUsed: 28, pace: ahead })).toMatchObject({ word: 'ahead of today’s pace', tone: 'warning' })
-  const calm = { pct: 40, resetsAt: NOW + 4 * D }
-  expect(todayVerdict({ week: calm, todayUsed: 20, pace: pace(calm, 20, NOW) }).word).toBe('on track')
+test('the bar is today’s quota: on track inside it, near its end, then over it', async () => {
+  // Wednesday noon; 20% before today against an even 35.7% by this morning: today's quota is 30%.
+  const at = (todayUsed: number) => {
+    const week = { pct: 20 + todayUsed, resetsAt: NOW + 4 * D }
+    return todayVerdict({ week, todayUsed, pace: pace(week, todayUsed, NOW) })
+  }
+  expect(at(10).word).toBe('on track')
+  expect(at(25)).toMatchObject({ word: 'near today’s quota', tone: 'warning' })
+  expect(at(33)).toMatchObject({ word: 'over today’s quota', tone: 'warning' })
 })

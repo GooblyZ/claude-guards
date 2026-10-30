@@ -144,11 +144,11 @@ export const todayVerdict = (m: Meter): Verdict => {
   if (p.restDaily !== undefined && p.restDaily < SHARE / 2) {
     return { word: 'week running short', tone: 'error', extra: `The days left have about ${pct(p.restDaily)} each.` }
   }
+  // The bar is today's quota: green inside it, orange near its end and past it.
   if (m.todayUsed > p.todayBudget) {
-    return { word: 'past today’s share', tone: 'warning', extra: 'That’s fine: the days ahead get a little less.' }
+    return { word: 'over today’s quota', tone: 'warning', extra: 'The coming days get a little less.' }
   }
-  // Clearly past where an even day stands by this hour (the bar's tick), though not yet past the share.
-  if (m.todayUsed >= 1 && m.todayUsed > p.todayUsual * 1.2 + 0.5) return { word: 'ahead of today’s pace', tone: 'warning' }
+  if (p.todayBudget > 0 && m.todayUsed >= p.todayBudget * 0.8) return { word: 'near today’s quota', tone: 'warning' }
   return { word: 'on track', tone: 'success' }
 }
 
