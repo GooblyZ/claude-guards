@@ -266,3 +266,17 @@ test('while a turn runs the row says it is paused, and the full check runs when 
   await ui.unmount()
 })
 
+
+test('an overcounted day is healed at start, before any reply', async ($, on) => {
+  // The week at 29%, but the days add up to more: today must give back the excess at once.
+  engine(on, undefined, undefined, {
+    lastWeek: { pct: 29, resetsAt: NOW + 4 * D + 10 * H },
+    seeded: true,
+    days: { '2026-10-27': { used: 12.8 }, '2026-10-28': { used: 32 } },
+  }, [])
+  await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
+  const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
+  expect(await has(ui, /saved from earlier days|took|even pace/)).toBe(true)
+  expect(await has(ui, /\+30%/)).toBe(false)
+  await ui.unmount()
+})

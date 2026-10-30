@@ -79,6 +79,12 @@ function measure($: EngineInterface, fresh?: Reading[]) {
     if (!readings.length && last?.resetsAt && last.resetsAt > now) {
       readings = [{ kind: 'seven_day', percentUsed: last.pct, resetsAt: new Date(last.resetsAt).toISOString() }]
     }
+    // Whatever the reading, the days can't add up to more than the week: heal before drawing.
+    const shown = readings.find(r => r.kind === 'seven_day')
+    if (shown) {
+      const healed = healDays(days, { pct: shown.percentUsed, resetsAt: shown.resetsAt ? Date.parse(shown.resetsAt) : undefined }, now)
+      if (healed !== days) await $.store.set('days', (days = healed))
+    }
     const m = meter(readings, days, now)
     await update($, meterAtom, () => m)
   })
